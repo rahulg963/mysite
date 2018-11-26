@@ -8,14 +8,47 @@ from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import mixins
 
-
 from poll.Serializers import QuestionSerializer
 from poll.models import Question
 
 
-# class PollListView(generics.GenericAPIView, mixins.ListModelMixin):
-#     serializer_class = QuestionSerializer
-#
+class PollListView(generics.GenericAPIView,
+                   mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.RetrieveModelMixin,
+                   mixins.DestroyModelMixin
+                   ):
+    # mandatory variables
+    serializer_class = QuestionSerializer
+    queryset = Question.objects.all()
+    lookup_field = 'id'
+
+    # if get api require id based searching
+    # def get(self, request, id=None):
+    #     if id:
+    #         return self.retrieve(request, id)
+    #     else:
+    #         return self.list(request)
+    def get(self, request):
+        return self.list(request)
+
+    def post(self, request):
+        return self.create(request)
+
+    # this is called after last line of post
+    def perform_create(self, serializer):
+        # this need X-CSRFToken as header field which in cookie for user login
+        serializer.save(created_by=self.request.user)
+
+    def put(self, request, id=None):
+        return self.update(request, id)
+
+    def perform_update(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def delete(self, request, id=None):
+        return self.destroy(request, id)
 
 
 class PollAPIView(APIView):
